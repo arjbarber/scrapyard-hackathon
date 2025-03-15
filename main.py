@@ -204,7 +204,13 @@ def browse():
                     elif image == blink:
                         rightRectColor = (0, 0, 0)
                 elif back_button.collidepoint(event.pos):
+                    for i in range(blink+1):
+                        image_path = os.path.join("images", f"{i}. frame.jpg")
+                        if os.path.exists(image_path):
+                            os.remove(image_path)
+                    blink = 0
                     main()
+
 
         left_text = ARROW_FONT.render("<", True, (255, 255, 255))
         right_text = ARROW_FONT.render(">", True, (255, 255, 255))
