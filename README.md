@@ -8,7 +8,8 @@ Supplies needed: computer, 64x32 LED Matrix & hackclub NEON microcontroller, USB
 1. Clone the repository to your computer
 2. Run `pip install -r requirements.txt` to install required modules
 3. Run the app using `python main.py`
-4. The camera will take a screenshot when you blink
+4. The app will take pictures for 5 seconds after you press the shutter button.
+5. To view saved pictures, press the preview button. Once you press the back button, the pictures will be deleted.
 
 ### LED Matrix:
 1. Connect the microcontroller to your computer with the USBC cable
