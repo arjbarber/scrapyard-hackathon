@@ -14,14 +14,15 @@ def main():
     clock = pygame.time.Clock()
 
     run = True
-    while running:
+    while run:
         clock.tick(config.FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                run = False
 
-
-    
-    draw_screen()
+        draw_screen()
     
     pygame.quit()
+
+if __name__ == "__main__":
+    main()
