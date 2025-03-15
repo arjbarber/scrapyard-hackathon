@@ -14,11 +14,7 @@ WIN = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-LEFT_EYE = [33, 160, 158, 133, 153, 144]
-RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 
-EAR_THRESHOLD = 0.20
-BLINK_FRAMES = 2 
 blink_counter = 0
 blink_detected = False
 
@@ -70,8 +66,8 @@ def detect_blink(frame):
     if results.multi_face_landmarks:
         for face_landmarks in results.multi_face_landmarks:
             # Convert normalized coordinates to pixel values
-            left_eye = [(face_landmarks.landmark[i].x * width, face_landmarks.landmark[i].y * height) for i in LEFT_EYE]
-            right_eye = [(face_landmarks.landmark[i].x * width, face_landmarks.landmark[i].y * height) for i in RIGHT_EYE]
+            left_eye = [(face_landmarks.landmark[i].x * width, face_landmarks.landmark[i].y * height) for i in config.LEFT_EYE]
+            right_eye = [(face_landmarks.landmark[i].x * width, face_landmarks.landmark[i].y * height) for i in config.RIGHT_EYE]
 
             # Compute EAR for both eyes
             left_ear = eye_aspect_ratio(left_eye)
@@ -79,10 +75,10 @@ def detect_blink(frame):
             avg_ear = (left_ear + right_ear) / 2.0
 
             # Blink detection logic
-            if avg_ear < EAR_THRESHOLD:
+            if avg_ear < config.EAR_THRESHOLD:
                 blink_counter += 1
             else:
-                if blink_counter >= BLINK_FRAMES:  # Blink confirmed
+                if blink_counter >= config.BLINK_FRAMES:  # Blink confirmed
                     blink_detected = True
                 blink_counter = 0  # Reset counter
 
