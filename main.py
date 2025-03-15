@@ -4,16 +4,19 @@ import cv2
 import config
 import numpy as np
 import sys
-import time
 import os
 pygame.init()
 
-os.mkdir("images")
+try:
+    os.mkdir("images")
+except FileExistsError:
+    ...
 
 WIN = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
+ARROW_FONT = pygame.font.SysFont("Times",50)
 
 blink_counter = 0
 blink_detected = False
@@ -86,7 +89,7 @@ def detect_blink(frame):
 
 def main():
     global blink_detected
-    pygame.display.set_caption("Pygame Camera App")
+    pygame.display.set_caption("Camera App")
     capture_button = pygame.rect.Rect(
         config.WIDTH // 2 - config.CAPTURE_BUTTON_SIZE // 2,
         config.HEIGHT - config.CAPTURE_BUTTON_SIZE - config.CAPTURE_BUTTON_PADDING,
@@ -125,5 +128,42 @@ def main():
     cap.release()
     pygame.quit()
 
+def browse():
+    pygame.init()
+    clock = pygame.time.Clock()
+    run = True
+    ARROW_FONT = pygame.font.Font(None, 50)
+
+    left_arrow = pygame.Rect(config.ARROW_PADDING, config.HEIGHT // 2 - config.ARROW_SIZE // 2, config.ARROW_SIZE, config.ARROW_SIZE)
+    right_arrow = pygame.Rect(config.WIDTH - config.ARROW_SIZE - config.ARROW_PADDING, config.HEIGHT // 2 - config.ARROW_SIZE // 2, config.ARROW_SIZE, config.ARROW_SIZE)
+
+    while run:
+        clock.tick(config.FPS)
+        WIN.fill((0, 0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if left_arrow.collidepoint(event.pos):
+                    print("Left arrow clicked")
+                elif right_arrow.collidepoint(event.pos):
+                    print("Right arrow clicked")
+
+        left_text = ARROW_FONT.render("<", True, (255, 255, 255))
+        right_text = ARROW_FONT.render(">", True, (255, 255, 255))
+
+        left_text_rect = left_text.get_rect(center=left_arrow.center)
+        right_text_rect = right_text.get_rect(center=right_arrow.center)
+
+        pygame.draw.rect(WIN, (100, 100, 100), left_arrow)
+        pygame.draw.rect(WIN, (100, 100, 100), right_arrow)
+
+        WIN.blit(left_text, left_text_rect)
+        WIN.blit(right_text, right_text_rect)
+
+        pygame.display.update()
+
+    pygame.quit()
+
 if __name__ == "__main__":
-    main()
+    browse()
