@@ -5,6 +5,7 @@ import config
 import numpy as np
 import sys
 import os
+import time
 pygame.init()
 
 blink = 0
@@ -96,6 +97,7 @@ def detect_blink(frame):
 def main():
     global blink_detected
     global blink
+    capturing = False
     pygame.display.set_caption("Camera App")
     capture_button = pygame.rect.Rect(
         config.WIDTH // 2 - config.CAPTURE_BUTTON_SIZE // 2,
@@ -114,6 +116,7 @@ def main():
     cap = initialize_camera()
     not_blink = 0
     run = True
+    capture_time = 0
     while run:
         clock.tick(config.FPS)
         for event in pygame.event.get():
@@ -122,13 +125,21 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if preview_button.collidepoint(event.pos):
                     browse()
+                if capture_button.collidepoint(event.pos):
+                    capture_time = time.time() + 5
+                    capturing = True
+                    
 
         ret, frame = cap.read()
         if not ret:
             print("Error: Could not read frame.")
             break
+        
+        if time.time() >= capture_time:
+            capturing = False
+            capture_time = 0
 
-        if detect_blink(frame):
+        if capturing and detect_blink(frame):
             #print(f"{blink}. Blink detected!")
             blink_detected = False
             filepath = os.path.join('images',f'{blink}. frame.jpg')
