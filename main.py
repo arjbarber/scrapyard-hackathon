@@ -1,12 +1,24 @@
 import pygame
+import mediapipe as mp
 import cv2
 import config
+import numpy as np
 import sys
 import time
 import os
 pygame.init()
 
 WIN = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+
+LEFT_EYE = [33, 160, 158, 133, 153, 144]
+RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+
+EAR_THRESHOLD = 0.20
+BLINK_FRAMES = 2 
+blink_counter = 0
+blink_detected = False
 
 def draw_screen(frame, capture_button: pygame.Rect):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -26,6 +38,50 @@ def initialize_camera():
         return None
     return cap
 
+
+def eye_aspect_ratio(eye_landmarks):
+    """Calculate Eye Aspect Ratio (EAR)"""
+    def euclidean_dist(p1, p2):
+        return np.linalg.norm(np.array(p1) - np.array(p2))
+
+    # Compute vertical and horizontal distances
+    vertical_1 = euclidean_dist(eye_landmarks[1], eye_landmarks[5])
+    vertical_2 = euclidean_dist(eye_landmarks[2], eye_landmarks[4])
+    horizontal = euclidean_dist(eye_landmarks[0], eye_landmarks[3])
+
+    # EAR calculation
+    ear = (vertical_1 + vertical_2) / (2.0 * horizontal)
+    return ear
+
+def detect_blink(frame):
+    """Detects blink in a given cv2 frame"""
+    global blink_counter, blink_detected
+
+    height, width, _ = frame.shape
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(frame_rgb)
+
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
+            # Convert normalized coordinates to pixel values
+            left_eye = [(face_landmarks.landmark[i].x * width, face_landmarks.landmark[i].y * height) for i in LEFT_EYE]
+            right_eye = [(face_landmarks.landmark[i].x * width, face_landmarks.landmark[i].y * height) for i in RIGHT_EYE]
+
+            # Compute EAR for both eyes
+            left_ear = eye_aspect_ratio(left_eye)
+            right_ear = eye_aspect_ratio(right_eye)
+            avg_ear = (left_ear + right_ear) / 2.0
+
+            # Blink detection logic
+            if avg_ear < EAR_THRESHOLD:
+                blink_counter += 1
+            else:
+                if blink_counter >= BLINK_FRAMES:  # Blink confirmed
+                    blink_detected = True
+                blink_counter = 0  # Reset counter
+
+    return blink_detected
+
 def main():
     pygame.display.set_caption("Pygame Camera App")
     capture_button = pygame.rect.Rect(
@@ -37,7 +93,8 @@ def main():
 
     clock = pygame.time.Clock()
     cap = initialize_camera()
-
+    blink = 0
+    not_blink = 0
     run = True
     while run:
         clock.tick(config.FPS)
@@ -50,8 +107,12 @@ def main():
             print("Error: Could not read frame.")
             break
 
-        if wait_until_blink(frame):
-            print("Blink detected!")
+        if detect_blink(frame):
+            print(f"{blink}. Blink detected!")
+            blink += 1
+        else:
+            print(f"{not_blink}. Blink Not Detected")
+            not_blink += 1
 
         draw_screen(frame, capture_button)
 
