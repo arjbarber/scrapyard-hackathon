@@ -1,7 +1,7 @@
 # Window Settings
 WIDTH = 1280
 HEIGHT = 720
-FPS = 60
+FPS = 30
 BACKGROUND_COLOR = (255, 255, 255)
 
 # Capture Button

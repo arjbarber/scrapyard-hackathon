@@ -8,6 +8,8 @@ import time
 import os
 pygame.init()
 
+os.mkdir("images")
+
 WIN = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -20,14 +22,18 @@ BLINK_FRAMES = 2
 blink_counter = 0
 blink_detected = False
 
-def draw_screen(frame, capture_button: pygame.Rect):
+def draw_screen(frame, capture_button: pygame.Rect, blink_detected):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = cv2.transpose(frame)
     frame = pygame.surfarray.make_surface(frame)
     frame = pygame.transform.scale(frame, (config.WIDTH, config.HEIGHT))
     WIN.blit(frame, (0, 0))
     pygame.draw.circle(WIN, config.CAPTURE_BUTTON_COLOR, capture_button.center, config.CAPTURE_BUTTON_SIZE // 2)
-    pygame.display.update()
+    if blink_detected == False:
+        pygame.display.update()
+    else:
+        pygame.display.update()
+        pygame.time.delay(10000)
 
 def initialize_camera():
     cap = cv2.VideoCapture(0)
@@ -83,6 +89,7 @@ def detect_blink(frame):
     return blink_detected
 
 def main():
+    global blink_detected
     pygame.display.set_caption("Pygame Camera App")
     capture_button = pygame.rect.Rect(
         config.WIDTH // 2 - config.CAPTURE_BUTTON_SIZE // 2,
@@ -108,13 +115,16 @@ def main():
             break
 
         if detect_blink(frame):
-            print(f"{blink}. Blink detected!")
+            #print(f"{blink}. Blink detected!")
+            blink_detected = False
+            filepath = os.path.join('images',f'{blink}. frame.jpg')
+            cv2.imwrite(filepath, frame)
             blink += 1
         else:
-            print(f"{not_blink}. Blink Not Detected")
+            #print(f"{not_blink}. Blink Not Detected")
             not_blink += 1
 
-        draw_screen(frame, capture_button)
+        draw_screen(frame, capture_button, blink_detected)
 
     cap.release()
     pygame.quit()
