@@ -26,16 +26,44 @@ blink_detected = False
 
 def draw_screen(frame, capture_button: pygame.Rect, preview_button: pygame.Rect, blink_detected):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    height, width, _ = frame.shape  # Get frame dimensions
+    results = face_mesh.process(frame)  # Detect face landmarks
+
+    # Convert OpenCV frame to Pygame surface
     frame = cv2.transpose(frame)
     frame = pygame.surfarray.make_surface(frame)
     frame = pygame.transform.scale(frame, (config.WIDTH, config.HEIGHT))
     WIN.blit(frame, (0, 0))
+
+    # Draw facial landmarks and connections
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
+            landmark_points = []
+            
+            # Get all landmarks
+            for idx, landmark in enumerate(face_landmarks.landmark):
+                x = int(landmark.x * config.WIDTH)
+                y = int(landmark.y * config.HEIGHT)
+                landmark_points.append((x, y))
+
+                # Draw points on face
+                pygame.draw.circle(WIN, (0, 255, 0), (x, y), 2)  # Green dots
+
+            # Draw lines (connections between landmarks)
+            for connection in mp_face_mesh.FACEMESH_TESSELATION:
+                start_idx, end_idx = connection
+                if start_idx < len(landmark_points) and end_idx < len(landmark_points):
+                    pygame.draw.line(WIN, (255, 0, 0), landmark_points[start_idx], landmark_points[end_idx], 1)  # Red lines
+
+    # Draw UI elements
     pygame.draw.circle(WIN, config.CAPTURE_BUTTON_COLOR, capture_button.center, config.CAPTURE_BUTTON_SIZE // 2)
     pygame.draw.rect(WIN, config.PREVIEW_BUTTON_COLOR, preview_button)
+    
     preview_text = ARROW_FONT.render("Preview", True, (255, 255, 255))
     preview_text_rect = preview_text.get_rect(center=preview_button.center)
     WIN.blit(preview_text, preview_text_rect)
-    if blink_detected == False:
+
+    if not blink_detected:
         pygame.display.update()
     else:
         pygame.display.update()
