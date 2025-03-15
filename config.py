@@ -16,6 +16,10 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 EAR_THRESHOLD = 0.20
 BLINK_FRAMES = 2 
 
+# Preview Button
+PREVIEW_BUTTON_SIZE = [200, 60]
+PREVIEW_BUTTON_PADDING = 20
+PREVIEW_BUTTON_COLOR = (0,0,0)
 
 ############## Browse Settings ##############
 # Arrow Settings
@@ -23,7 +27,7 @@ ARROW_PADDING = 20
 ARROW_SIZE = 30
 
 # Back Button Settings
-BACK_BUTTON_SIZE = (30, 40)
+BACK_BUTTON_SIZE = (150, 60)
 BACK_BUTTON_PADDING = 10
 
 # Button Font Settings

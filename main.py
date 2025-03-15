@@ -7,7 +7,7 @@ import sys
 import os
 pygame.init()
 
-blink = 38
+blink = 0
 
 try:
     os.mkdir("images")
@@ -23,13 +23,17 @@ ARROW_FONT = pygame.font.SysFont("Times",50)
 blink_counter = 0
 blink_detected = False
 
-def draw_screen(frame, capture_button: pygame.Rect, blink_detected):
+def draw_screen(frame, capture_button: pygame.Rect, preview_button: pygame.Rect, blink_detected):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame = cv2.transpose(frame)
     frame = pygame.surfarray.make_surface(frame)
     frame = pygame.transform.scale(frame, (config.WIDTH, config.HEIGHT))
     WIN.blit(frame, (0, 0))
     pygame.draw.circle(WIN, config.CAPTURE_BUTTON_COLOR, capture_button.center, config.CAPTURE_BUTTON_SIZE // 2)
+    pygame.draw.rect(WIN, config.PREVIEW_BUTTON_COLOR, preview_button)
+    preview_text = ARROW_FONT.render("Preview", True, (255, 255, 255))
+    preview_text_rect = preview_text.get_rect(center=preview_button.center)
+    WIN.blit(preview_text, preview_text_rect)
     if blink_detected == False:
         pygame.display.update()
     else:
@@ -99,6 +103,12 @@ def main():
         config.CAPTURE_BUTTON_SIZE,
         config.CAPTURE_BUTTON_SIZE,
     )
+    preview_button = pygame.rect.Rect(
+        config.PREVIEW_BUTTON_PADDING,
+        config.HEIGHT - config.PREVIEW_BUTTON_SIZE[1] - config.PREVIEW_BUTTON_PADDING,
+        config.PREVIEW_BUTTON_SIZE[0],
+        config.PREVIEW_BUTTON_SIZE[1],
+    )
 
     clock = pygame.time.Clock()
     cap = initialize_camera()
@@ -109,6 +119,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if preview_button.collidepoint(event.pos):
+                    browse()
 
         ret, frame = cap.read()
         if not ret:
@@ -125,7 +138,7 @@ def main():
             #print(f"{not_blink}. Blink Not Detected")
             not_blink += 1
 
-        draw_screen(frame, capture_button, blink_detected)
+        draw_screen(frame, capture_button, preview_button, blink_detected)
 
     cap.release()
     pygame.quit()
@@ -136,14 +149,16 @@ def browse():
     clock = pygame.time.Clock()
     run = True
     ARROW_FONT = pygame.font.Font(None, 50)
-
+    WIN.fill((0,0,0))
     left_arrow = pygame.Rect(config.ARROW_PADDING, config.HEIGHT // 2 - config.ARROW_SIZE // 2, config.ARROW_SIZE, config.ARROW_SIZE)
     right_arrow = pygame.Rect(config.WIDTH - config.ARROW_SIZE - config.ARROW_PADDING, config.HEIGHT // 2 - config.ARROW_SIZE // 2, config.ARROW_SIZE, config.ARROW_SIZE)
     back_button = pygame.Rect(config.BACK_BUTTON_PADDING, config.BACK_BUTTON_PADDING, config.BACK_BUTTON_SIZE[0], config.BACK_BUTTON_SIZE[1])
     image = 0
-    
+    image_path = os.path.join("images", f"{image}. frame.jpg")
+    if os.path.exists(image_path):
+        img = pygame.image.load(image_path)
+        img = pygame.transform.scale(img, (config.WIDTH, config.HEIGHT))
     while run:
-        
         clock.tick(config.FPS)
         leftRectColor = (100, 100, 100)
         rightRectColor = (100, 100, 100)
@@ -201,4 +216,4 @@ def browse():
     pygame.quit()
 
 if __name__ == "__main__":
-    browse()
+    main()
