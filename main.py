@@ -7,6 +7,8 @@ import sys
 import os
 pygame.init()
 
+blink = 38
+
 try:
     os.mkdir("images")
 except FileExistsError:
@@ -89,6 +91,7 @@ def detect_blink(frame):
 
 def main():
     global blink_detected
+    global blink
     pygame.display.set_caption("Camera App")
     capture_button = pygame.rect.Rect(
         config.WIDTH // 2 - config.CAPTURE_BUTTON_SIZE // 2,
@@ -99,7 +102,6 @@ def main():
 
     clock = pygame.time.Clock()
     cap = initialize_camera()
-    blink = 0
     not_blink = 0
     run = True
     while run:
@@ -129,6 +131,7 @@ def main():
     pygame.quit()
 
 def browse():
+    global blink
     pygame.init()
     clock = pygame.time.Clock()
     run = True
@@ -136,30 +139,62 @@ def browse():
 
     left_arrow = pygame.Rect(config.ARROW_PADDING, config.HEIGHT // 2 - config.ARROW_SIZE // 2, config.ARROW_SIZE, config.ARROW_SIZE)
     right_arrow = pygame.Rect(config.WIDTH - config.ARROW_SIZE - config.ARROW_PADDING, config.HEIGHT // 2 - config.ARROW_SIZE // 2, config.ARROW_SIZE, config.ARROW_SIZE)
-
+    back_button = pygame.Rect(config.BACK_BUTTON_PADDING, config.BACK_BUTTON_PADDING, config.BACK_BUTTON_SIZE[0], config.BACK_BUTTON_SIZE[1])
+    image = 0
+    
     while run:
+        
         clock.tick(config.FPS)
-        WIN.fill((0, 0, 0))
+        leftRectColor = (100, 100, 100)
+        rightRectColor = (100, 100, 100)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if left_arrow.collidepoint(event.pos):
-                    print("Left arrow clicked")
+                    #print(f"l. {image}")
+                    if image > 0:
+                        leftRectColor = (100, 100, 100)
+                        image -= 1
+                        image_path = os.path.join("images", f"{image}. frame.jpg")
+                        if os.path.exists(image_path):
+                            img = pygame.image.load(image_path)
+                            img = pygame.transform.scale(img, (config.WIDTH, config.HEIGHT))
+                            WIN.blit(img, (0, 0))
+                    elif image == 0:
+                        leftRectColor = (0, 0 , 0)
+
                 elif right_arrow.collidepoint(event.pos):
-                    print("Right arrow clicked")
+                    #print(f"r. {image}")
+                    #print(blink)
+                    if image < blink:
+                        rightRectColor = (100, 100, 100)
+                        image += 1
+                        image_path = os.path.join("images", f"{image}. frame.jpg")
+                        if os.path.exists(image_path):
+                            img = pygame.image.load(image_path)
+                            img = pygame.transform.scale(img, (config.WIDTH, config.HEIGHT))
+                            WIN.blit(img, (0, 0))
+                    elif image == blink:
+                        rightRectColor = (0, 0, 0)
+                elif back_button.collidepoint(event.pos):
+                    main()
 
         left_text = ARROW_FONT.render("<", True, (255, 255, 255))
         right_text = ARROW_FONT.render(">", True, (255, 255, 255))
+        back_text = ARROW_FONT.render("Back", True, (255, 255, 255))
 
         left_text_rect = left_text.get_rect(center=left_arrow.center)
         right_text_rect = right_text.get_rect(center=right_arrow.center)
+        back_text_rect = back_text.get_rect(center=back_button.center)
 
         pygame.draw.rect(WIN, (100, 100, 100), left_arrow)
         pygame.draw.rect(WIN, (100, 100, 100), right_arrow)
+        pygame.draw.rect(WIN, (0, 0, 0), back_text_rect)
 
         WIN.blit(left_text, left_text_rect)
         WIN.blit(right_text, right_text_rect)
+        WIN.blit(back_text, back_text_rect)
 
         pygame.display.update()
 
